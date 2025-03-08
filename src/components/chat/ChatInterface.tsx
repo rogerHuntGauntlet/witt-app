@@ -1013,6 +1013,20 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ customApiKey }) =>
     e.target.style.height = `${Math.min(e.target.scrollHeight, 150)}px`;
   };
 
+  // Add reset function after handleInputChange
+  const handleReset = () => {
+    setInput('');
+    setMessages([]);
+    setCurrentInterpretation(null);
+    setIsLoading(false);
+    setProcessingStep('idle');
+    setFrameworkStatuses({});
+    setRateLimitedMessage(null);
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto';
+    }
+  };
+
   // Handle starter question click
   const handleStarterQuestionClick = (question: string) => {
     setInput(question);
@@ -1602,13 +1616,29 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ customApiKey }) =>
               disabled={isLoading}
               rows={3}
             />
-            <button 
-              type="submit" 
-              className={styles.button}
-              disabled={isLoading || !input.trim()}
-            >
-              Ask
-            </button>
+            <div className={styles.buttonGroup}>
+              <button 
+                type="submit" 
+                className={styles.button}
+                disabled={isLoading || !input.trim()}
+              >
+                Ask
+              </button>
+              {messages.length > 0 && (
+                <button
+                  type="button"
+                  className={styles.resetButton}
+                  onClick={handleReset}
+                  disabled={isLoading}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    <path d="M15 9l-6 6M9 9l6 6"/>
+                  </svg>
+                  Reset
+                </button>
+              )}
+            </div>
           </form>
           
           {/* Rate limit message */}
