@@ -341,21 +341,120 @@
 
 /* Modal */
 .modal {
-  padding: 1.5rem;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
 }
 
 .modalContent {
-  padding: 1.5rem;
+  background-color: white;
+  border-radius: 8px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  animation: modalFadeIn 0.3s ease;
+}
+
+.closeButton {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #666;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.closeButton:hover {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.modalContent h2 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.5rem;
+  color: #333;
 }
 
 .modalQuestions {
-  margin-top: 1.5rem;
   display: grid;
-  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
 }
 
 .modalQuestion {
-  padding: 0.75rem 1rem;
+  text-align: left;
+  background-color: #f8f9fa;
+  border: 1px solid #eaeaea;
+  border-radius: 8px;
+  padding: 1rem;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  cursor: pointer;
+  color: #333;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.modalQuestion:hover {
+  background-color: #f0f0f0;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive adjustments for modal */
+@media (max-width: 768px) {
+  .modalContent {
+    padding: 1.5rem;
+    margin: 1rem;
+  }
+  
+  .modalQuestions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .modalContent {
+    padding: 1.25rem;
+  }
+  
+  .modalQuestion {
+    padding: 0.875rem;
+    font-size: 0.9rem;
+  }
 }
 
 /* Question Former */
@@ -494,10 +593,6 @@
   .suggestionButtons {
     gap: 0.5rem;
   }
-  
-  .modalContent {
-    padding: 1rem;
-  }
 }
 
 @media (max-width: 480px) {
@@ -507,10 +602,6 @@
   
   .suggestionButtons {
     flex-direction: column;
-  }
-  
-  .modalContent {
-    padding: 0.75rem;
   }
 }
 
