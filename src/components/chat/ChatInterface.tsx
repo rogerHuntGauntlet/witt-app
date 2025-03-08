@@ -1075,7 +1075,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ customApiKey }) =>
             <div className={styles.stepIcon}>1</div>
             <div className={styles.stepContent}>
               <div className={styles.stepTitle}>Finding relevant Wittgenstein passages</div>
-              <div className={styles.stepDescription}>Searching for the most relevant passages in Wittgenstein's works related to your question.</div>
+              <div className={styles.stepDescription}>Searching through Wittgenstein's works for passages that relate to your question.</div>
             </div>
           </div>
           
@@ -1083,7 +1083,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ customApiKey }) =>
             <div className={styles.stepIcon}>2</div>
             <div className={styles.stepContent}>
               <div className={styles.stepTitle}>Finding Transaction Theory passages</div>
-              <div className={styles.stepDescription}>Searching for relevant Transaction Theory material related to your question.</div>
+              <div className={styles.stepDescription}>Identifying relevant Transaction Theory concepts and connections.</div>
             </div>
           </div>
           
@@ -1091,7 +1091,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ customApiKey }) =>
             <div className={styles.stepIcon}>3</div>
             <div className={styles.stepContent}>
               <div className={styles.stepTitle}>Generating philosophical interpretations</div>
-              <div className={styles.stepDescription}>Creating interpretations from all philosophical frameworks.</div>
+              <div className={styles.stepDescription}>Analyzing passages through multiple philosophical frameworks.</div>
             </div>
           </div>
           
@@ -1099,7 +1099,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ customApiKey }) =>
             <div className={styles.stepIcon}>4</div>
             <div className={styles.stepContent}>
               <div className={styles.stepTitle}>Finalizing results</div>
-              <div className={styles.stepDescription}>Organizing all interpretations and preparing the final response.</div>
+              <div className={styles.stepDescription}>Organizing interpretations and preparing a comprehensive response.</div>
             </div>
           </div>
         </div>
@@ -1554,31 +1554,31 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ customApiKey }) =>
               <button className={styles.closeButton} onClick={() => setShowQuestionFormer(false)}>×</button>
               <h2>Question Former</h2>
               <p className={styles.questionFormerDesc}>
-                Enter your question and I'll help you form it in a way that will get the most insightful response.
+                Let me help you form your question in a way that will get the most insightful and philosophically rich response.
               </p>
               <div className={styles.questionFormerInput}>
                 <textarea
                   value={formingQuestion}
                   onChange={(e) => setFormingQuestion(e.target.value)}
-                  placeholder="Enter your question here..."
-                  rows={3}
+                  placeholder="Enter your philosophical question here..."
+                  rows={4}
                 />
                 <button
                   onClick={handleFormQuestion}
                   disabled={isFormingQuestion || !formingQuestion.trim()}
                 >
-                  {isFormingQuestion ? 'Forming...' : 'Form Question'}
+                  {isFormingQuestion ? 'Analyzing question...' : 'Improve my question'}
                 </button>
               </div>
               {improvedQuestion && (
                 <div className={styles.improvedQuestion}>
-                  <h3>Improved Question:</h3>
+                  <h3>Improved Question</h3>
                   <p>{improvedQuestion.improvedQuestion}</p>
                   <div className={styles.explanation}>
                     <h4>Why this is better:</h4>
                     <p>{improvedQuestion.explanation}</p>
                   </div>
-                  <button onClick={useImprovedQuestion}>Use This Question</button>
+                  <button onClick={useImprovedQuestion}>Use this improved question</button>
                 </div>
               )}
             </div>
