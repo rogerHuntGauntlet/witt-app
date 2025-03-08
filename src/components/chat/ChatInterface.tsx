@@ -1587,36 +1587,36 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ customApiKey }) =>
 
         <div className={styles.formContainer}>
           <form onSubmit={handleSubmit} className={styles.form}>
-          <textarea
-            ref={inputRef}
+            <textarea
+              ref={inputRef}
               className={styles.input}
-            placeholder="Ask a question about Wittgenstein's philosophy..."
-            value={input}
-            onChange={handleInputChange}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSubmit(e);
-              }
-            }}
-            disabled={isLoading}
-            rows={1}
-          />
-          <button 
-            type="submit" 
+              placeholder="Ask a question about Wittgenstein's philosophy..."
+              value={input}
+              onChange={handleInputChange}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit(e);
+                }
+              }}
+              disabled={isLoading}
+              rows={3}
+            />
+            <button 
+              type="submit" 
               className={styles.button}
-            disabled={isLoading || !input.trim()}
-          >
+              disabled={isLoading || !input.trim()}
+            >
               Ask
-          </button>
-        </form>
-        
-        {/* Rate limit message */}
-        {rateLimitedMessage && (
-          <div className={styles.rateLimitMessage}>
-            {rateLimitedMessage}
-          </div>
-        )}
+            </button>
+          </form>
+          
+          {/* Rate limit message */}
+          {rateLimitedMessage && (
+            <div className={styles.rateLimitMessage}>
+              {rateLimitedMessage}
+            </div>
+          )}
         </div>
       </div>
 
@@ -1634,8 +1634,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ customApiKey }) =>
           {currentInterpretation && (
             <div className={styles.interpretations}>
               <h2>Interpretations</h2>
-
-              {/* List of frameworks - each clickable to show details */}
               <div className={styles.frameworksList}>
                 {currentInterpretation.frameworks.map(framework => renderFramework(framework))}
               </div>
@@ -1646,7 +1644,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ customApiKey }) =>
                   <h2>Key Passages from Wittgenstein</h2>
                   <div className={styles.citationsGrid}>
                     {currentInterpretation.citations
-                      .filter(citation => !citation.id.startsWith('trans-')) // Filter out transaction theory passages
+                      .filter(citation => !citation.id.startsWith('trans-'))
                       .map(citation => (
                         <div key={citation.id} className={styles.citation}>
                           <div className={styles.citationContent}>
@@ -1657,7 +1655,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ customApiKey }) =>
                                 </ReactMarkdown>
                               </blockquote>
                             </div>
-                            
                           </div>
                         </div>
                       ))}
@@ -1665,7 +1662,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ customApiKey }) =>
                 </div>
               )}
 
-              {/* Transaction Theory Citations (if any) */}
+              {/* Transaction Theory Citations */}
               {currentInterpretation?.citations?.some(citation => citation.id.startsWith('trans-')) && (
                 <div className={styles.citations}>
                   <h2>Transaction Theory Passages</h2>
