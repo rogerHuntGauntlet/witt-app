@@ -8,7 +8,6 @@
     "start": "next start",
     "lint": "next lint",
     "generate-favicon": "node scripts/generate-favicon.js",
-    "create-favicon": "node scripts/create-temp-favicon.js",
     "favicon-guide": "node scripts/generate-simple-favicon.js",
     "upload-to-qdrant": "ts-node -P tsconfig.scripts.json src/scripts/upload-to-qdrant.ts",
     "search-qdrant": "ts-node -P tsconfig.scripts.json src/scripts/search-qdrant.ts",
@@ -41,10 +40,8 @@
     "@types/react": "^18.2.45",
     "@types/react-dom": "^18.2.18",
     "@types/uuid": "^9.0.7",
-    "canvas": "^2.11.2",
     "eslint": "^8.56.0",
     "eslint-config-next": "^14.0.4",
-    "png-to-ico": "^2.1.8",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   }
