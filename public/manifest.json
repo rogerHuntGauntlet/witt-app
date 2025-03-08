@@ -1,0 +1,23 @@
+{
+  "name": "Wittgenstein Interpretation Explorer",
+  "short_name": "Witt Explorer",
+  "description": "Explore Wittgenstein's philosophical ideas through multiple interpretative frameworks",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2E3A59",
+  "icons": [
+    {
+      "src": "/favicon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+} 

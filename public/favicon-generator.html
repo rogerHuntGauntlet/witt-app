@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Favicon Generator</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .container {
+      background-color: #f5f5f5;
+      border-radius: 10px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    h1 {
+      color: #2E3A59;
+      border-bottom: 2px solid #2E3A59;
+      padding-bottom: 10px;
+    }
+    .preview {
+      display: flex;
+      align-items: center;
+      margin: 20px 0;
+    }
+    .preview-item {
+      margin-right: 30px;
+      text-align: center;
+    }
+    .preview-title {
+      font-size: 14px;
+      margin-top: 5px;
+      color: #666;
+    }
+    .download-btn {
+      background-color: #2E3A59;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 10px 0;
+    }
+    .download-btn:hover {
+      background-color: #3E4A69;
+    }
+    .instructions {
+      margin: 20px 0;
+      padding: 15px;
+      border-left: 4px solid #2E3A59;
+      background-color: #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Witt Explorer Favicon Generator</h1>
+  
+  <div class="container">
+    <h2>Simple Favicon Download</h2>
+    <p>This page allows you to download a simple, pre-generated favicon.ico file for the Wittgenstein Interpretation Explorer app.</p>
+    
+    <div class="preview">
+      <div class="preview-item">
+        <canvas id="faviconPreview" width="64" height="64"></canvas>
+        <div class="preview-title">Preview (64x64)</div>
+      </div>
+      <div class="preview-item">
+        <canvas id="faviconPreview32" width="32" height="32"></canvas>
+        <div class="preview-title">Preview (32x32)</div>
+      </div>
+      <div class="preview-item">
+        <canvas id="faviconPreview16" width="16" height="16"></canvas>
+        <div class="preview-title">Preview (16x16)</div>
+      </div>
+    </div>
+    
+    <button id="downloadFavicon" class="download-btn">Download favicon.ico</button>
+    
+    <div class="instructions">
+      <h3>Instructions:</h3>
+      <ol>
+        <li>Click the "Download favicon.ico" button above</li>
+        <li>Save the file as "favicon.ico" in your project's "public" directory</li>
+        <li>Restart your development server with <code>npm run dev</code></li>
+        <li>Your favicon should now appear in the browser tab</li>
+      </ol>
+    </div>
+  </div>
+  
+  <p><strong>Note:</strong> This is a simple placeholder. For a production-grade favicon, please use one of the online services mentioned in the favicon guide (<code>npm run favicon-guide</code>).</p>
+  
+  <script>
+    // Base64-encoded favicon.ico data
+    // This is a simple blue square with a white "W" letter
+    const faviconBase64 = "AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAQAABILAAASCwAAAAAAAAAAAAD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8ALjRnUC40Z/8uNGf/LjRn/y40Z/8uNGf/LjRn/y40Z/8uNGf/LjRn/y40Z/8uNGf/LjRn/y40Z1D///8A////AC40Z1AuNGf/LjRn/y40Z/8uNGf/LjRn/y40Z/8uNGf/LjRn/y40Z/8uNGf/LjRn/y40Z/8uNGdQ////AP///wAuNGf/LjRn/y40Z/8uNGf/LjRn/y40Z/8uNGf/LjRn/y40Z/8uNGf/LjRn/y40Z/8uNGf/LjRn/////wD///8ALjRn/y40Z/8uNGf/LjRn/y40Z/8uNGf/LjRn/y40Z/8uNGf/LjRn/y40Z/8uNGf/LjRn/y40Z/////8A////AC40Z/8uNGf/LjRn/////wD///8A////AP///wD///8A////AP///wD///8ALjRn/y40Z/8uNGf/////AP///wAuNGf/LjRn/y40Z/////8A////AP///wD///8A////AP///wD///8A////AC40Z/8uNGf/LjRn/////wD///8ALjRn/y40Z/8uNGf/////AP///wD///8A////AP///wD///8A////AP///wD///8ALjRn/y40Z/////8A////AC40Z/8uNGf/LjRn/////wD///8A////AP///wD///8A////AP///wD///8A////AC40Z/8uNGf/////AP///wAuNGf/LjRn/y40Z/////8A////AP///wD///8A////AP///wD///8A////AC40Z/8uNGf/LjRn/////wD///8ALjRn/y40Z/8uNGf/////AP///wD///8A////AP///wD///8A////AC40Z/8uNGf/LjRn/y40Z/////8A////AC40Z/8uNGf/LjRn/y40Z/8uNGf/LjRn/y40Z/8uNGf/LjRn/y40Z/8uNGf/LjRn/y40Z/8uNGf/////AP///wAuNGf/LjRn/y40Z/8uNGf/LjRn/y40Z/8uNGf/LjRn/y40Z/8uNGf/LjRn/y40Z/8uNGf/LjRn/////wD///8ALjRnUC40Z/8uNGf/LjRn/y40Z/8uNGf/LjRn/y40Z/8uNGf/LjRn/y40Z/8uNGf/LjRn/y40Z1D///8A////AP///wAuNGdQLjRn/y40Z/8uNGf/LjRn/y40Z/8uNGf/LjRn/y40Z/8uNGf/LjRn/y40Z1D///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wAAAD//AAA//wAAP/8AAD//AAA//wAAP/8AAD//AAA//wAAP/8AAD//AAA//wAAP/8AAD//AAA//wAAP/8AAD//";
+    
+    // Function to draw favicon on canvas
+    function drawFavicon(canvasId, size) {
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext('2d');
+      
+      // Draw background
+      ctx.fillStyle = '#2E3A59';
+      ctx.fillRect(0, 0, size, size);
+      
+      // Draw W
+      ctx.fillStyle = 'white';
+      ctx.font = `bold ${size/2}px Arial`;
+      ctx.fillText('W', size/5, size*2/3);
+      
+      // Draw line
+      ctx.strokeStyle = 'white';
+      ctx.lineWidth = size/16;
+      ctx.beginPath();
+      ctx.moveTo(size/8, size*6/7);
+      ctx.lineTo(size*7/8, size*6/7);
+      ctx.stroke();
+    }
+    
+    // Function to download favicon
+    function downloadFavicon() {
+      const link = document.createElement('a');
+      link.href = `data:image/x-icon;base64,${faviconBase64}`;
+      link.download = 'favicon.ico';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+    
+    // Initialize on page load
+    window.onload = function() {
+      // Draw preview
+      drawFavicon('faviconPreview', 64);
+      drawFavicon('faviconPreview32', 32);
+      drawFavicon('faviconPreview16', 16);
+      
+      // Set up download button
+      document.getElementById('downloadFavicon').addEventListener('click', downloadFavicon);
+    };
+  </script>
+</body>
+</html> 
