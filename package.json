@@ -1,0 +1,46 @@
+{
+  "name": "witt-app",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "upload-to-qdrant": "ts-node -P tsconfig.scripts.json src/scripts/upload-to-qdrant.ts",
+    "search-qdrant": "ts-node -P tsconfig.scripts.json src/scripts/search-qdrant.ts",
+    "qdrant-demo": "ts-node -P tsconfig.scripts.json src/scripts/qdrant-demo.ts",
+    "upload-real-content": "ts-node -P tsconfig.scripts.json src/scripts/upload-real-content.ts",
+    "search-real-content": "ts-node -P tsconfig.scripts.json src/scripts/search-real-content.ts",
+    "test-env": "ts-node -P tsconfig.scripts.json src/scripts/test-env.ts",
+    "upload-thesis": "ts-node -P tsconfig.scripts.json src/scripts/upload-thesis.ts",
+    "search-thesis": "ts-node -P tsconfig.scripts.json src/scripts/search-thesis.ts",
+    "upload-witt-writings": "ts-node -P tsconfig.scripts.json src/scripts/upload-witt-writings.ts",
+    "upload-on-certainty": "ts-node -P tsconfig.scripts.json src/scripts/upload-on-certainty.ts",
+    "search-witt-writings": "ts-node -P tsconfig.scripts.json src/scripts/search-witt-writings.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@qdrant/js-client-rest": "^1.7.0",
+    "dotenv": "^16.3.1",
+    "mammoth": "^1.9.0",
+    "next": "^14.0.4",
+    "openai": "^4.24.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/dotenv": "^8.2.0",
+    "@types/node": "^20.10.5",
+    "@types/react": "^18.2.45",
+    "@types/react-dom": "^18.2.18",
+    "@types/uuid": "^9.0.7",
+    "eslint": "^8.56.0",
+    "eslint-config-next": "^14.0.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}

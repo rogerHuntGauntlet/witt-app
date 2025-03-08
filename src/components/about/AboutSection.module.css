@@ -1,0 +1,300 @@
+.aboutSection {
+  padding: 3rem 0;
+}
+
+.sectionTitle {
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
+  line-height: 1.3;
+  margin-bottom: 2rem;
+  text-align: center;
+  color: #003153; /* Deep Prussian Blue */
+}
+
+.aboutContent {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.aboutCard {
+  background-color: #F5F5DC; /* Warm Ivory */
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.cardTitle {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: #003153; /* Deep Prussian Blue */
+}
+
+.cardText {
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.processList, .techList {
+  padding-left: 1.5rem;
+}
+
+.processStep, .techItem {
+  margin-bottom: 0.75rem;
+  line-height: 1.5;
+}
+
+.frameworksSection {
+  background-color: #F5F5DC; /* Warm Ivory */
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.frameworksTitle {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: #003153; /* Deep Prussian Blue */
+  text-align: center;
+}
+
+.frameworksDescription {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.frameworksGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 1rem;
+}
+
+.frameworkBadge {
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  color: white;
+  font-weight: 500;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.frameworkBadge:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.viewIndicator {
+  position: absolute;
+  bottom: -25px;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 3px 0;
+  font-size: 0.7rem;
+  font-weight: normal;
+  transition: bottom 0.2s ease-in-out;
+}
+
+.frameworkBadge:hover .viewIndicator {
+  bottom: 0;
+}
+
+/* Modal styles */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modalContainer {
+  background-color: white;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 900px;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 2rem;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.modalClose {
+  position: absolute;
+  top: 1rem;
+  right: 1.5rem;
+  background: none;
+  border: none;
+  font-size: 2rem;
+  line-height: 1;
+  color: #566A76;
+  cursor: pointer;
+  padding: 0;
+}
+
+.modalTitle {
+  color: #003153;
+  margin: 0 0 1.5rem;
+  font-size: 1.8rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.modalSection {
+  margin-bottom: 2rem;
+}
+
+.modalSection h3 {
+  color: #003153;
+  margin: 0 0 1rem;
+  font-size: 1.4rem;
+}
+
+.modalSection p {
+  line-height: 1.6;
+  color: #333;
+  margin: 0 0 1rem;
+}
+
+.authorsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.authorCard {
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  padding: 1.2rem;
+}
+
+.authorCard h4 {
+  color: #003153;
+  margin: 0 0 0.75rem;
+  font-size: 1.2rem;
+}
+
+.authorCard h5 {
+  color: #566A76;
+  margin: 1rem 0 0.5rem;
+  font-size: 1rem;
+}
+
+.authorCard p {
+  margin: 0 0 1rem;
+}
+
+.authorCard ul {
+  list-style-type: disc;
+  padding-left: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.authorLinks {
+  margin-top: 0.75rem;
+}
+
+.authorLink {
+  display: inline-block;
+  color: #4a6fa5;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  background-color: rgba(74, 111, 165, 0.1);
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.authorLink:hover {
+  background-color: rgba(74, 111, 165, 0.2);
+  text-decoration: underline;
+}
+
+.publicationsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.publicationCard {
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  padding: 1.2rem;
+  border-left: 3px solid #859669;
+}
+
+.publicationCard h4 {
+  color: #003153;
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+.publicationAuthor {
+  color: #566A76;
+  font-style: italic;
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+}
+
+/* Additional responsive styles */
+@media (max-width: 768px) {
+  .authorsGrid,
+  .publicationsGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .modalContainer {
+    padding: 1.5rem;
+    width: 95%;
+  }
+}
+
+@media (max-width: 480px) {
+  .modalContainer {
+    padding: 1rem;
+  }
+  
+  .modalTitle {
+    font-size: 1.5rem;
+  }
+  
+  .modalSection h3 {
+    font-size: 1.2rem;
+  }
+}
+
+/* Responsive styles */
+@media (max-width: 639px) {
+  .aboutSection {
+    padding: 2rem 0;
+  }
+  
+  .sectionTitle {
+    font-size: 1.75rem;
+  }
+  
+  .aboutContent {
+    grid-template-columns: 1fr;
+  }
+  
+  .frameworksGrid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+} 
