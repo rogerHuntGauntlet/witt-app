@@ -793,65 +793,30 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ customApiKey }) =>
                 setCurrentInterpretation(prev => {
                   if (!prev) return prev;
                   
-                  // Process reference passages if they exist
-                  let updatedCitations = [...(prev.citations || [])];
-                  
-                  // For Transaction Theory, handle both Wittgenstein and Transaction passages
-                  if (framework.id === 'transactional') {
-                    if (startData.wittReferencePassages && Array.isArray(startData.wittReferencePassages)) {
-                      // Add any new Wittgenstein passages
-                      startData.wittReferencePassages.forEach((passage: Citation) => {
-                        if (!updatedCitations.some(c => c.id === passage.id)) {
-                          updatedCitations.push(passage);
-                        }
-                      });
-                    }
-                    
-                    if (startData.transReferencePassages && Array.isArray(startData.transReferencePassages)) {
-                      // Add any new Transaction passages
-                      startData.transReferencePassages.forEach((passage: Citation) => {
-                        if (!updatedCitations.some(c => c.id === passage.id)) {
-                          updatedCitations.push(passage);
-                        }
-                      });
-                    }
-                  } 
-                  // For other frameworks, handle regular reference passages
-                  else if (startData.referencePassages && Array.isArray(startData.referencePassages)) {
-                    startData.referencePassages.forEach((passage: Citation) => {
-                      if (!updatedCitations.some(c => c.id === passage.id)) {
-                        updatedCitations.push(passage);
-                      }
-                    });
-                  }
-                  
                   return {
                     ...prev,
-                    citations: updatedCitations,
-                    frameworks: prev.frameworks.map(fw => 
-                      fw.id === framework.id 
-                        ? { 
-                            ...fw, 
-                            interpretation: startData.interpretation,
-                            keyInsights: startData.structuredInterpretation?.keyInsights || [],
-                            relevantQuotes: startData.structuredInterpretation?.relevantQuotes || [],
-                            referencePassages: framework.id === 'transactional' 
-                              ? [...(startData.wittReferencePassages || []), ...(startData.transReferencePassages || [])]
-                              : startData.referencePassages || [],
+                    frameworks: prev.frameworks.map(fw =>
+                      fw.id === framework.id
+                        ? {
+                            ...fw,
+                            interpretation: startData.interpretation.mainInterpretation,
+                            keyInsights: startData.interpretation.keyInsights,
+                            relevantQuotes: startData.interpretation.relevantQuotes,
+                            referencePassages: startData.referencePassages,
                             isLoading: false,
                             error: false
-                          } 
+                          }
                         : fw
                     )
                   };
                 });
-                
+
                 // Update framework status
-                setFrameworkStatuses(prev => ({ 
-                  ...prev, 
-                  [framework.id]: 'complete' 
+                setFrameworkStatuses(prev => ({
+                  ...prev,
+                  [framework.id]: 'complete'
                 }));
-                
+
                 return { framework, success: true };
               }
               
