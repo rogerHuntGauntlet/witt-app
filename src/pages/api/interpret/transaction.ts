@@ -5,10 +5,7 @@ import dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || '',
-});
+// We'll initialize the OpenAI client in the handler function to use the correct API key
 
 // Interface for a better structured response
 interface InterpretationResponse {
@@ -27,16 +24,20 @@ interface InterpretationResponse {
 async function generateTransactionalInterpretation(
   query: string,
   wittPassages: any[],
-  transPassages: any[]
+  transPassages: any[],
+  apiKey: string
 ): Promise<{interpretation: InterpretationResponse, wittReferencePassages: any[], transReferencePassages: any[]}> {
   try {
+    // Initialize OpenAI client with the provided API key
+    const openai = new OpenAI({ apiKey });
+    
     // Limit the number of passages to avoid timeouts
     const limitedWittPassages = wittPassages.slice(0, 2); // Only use top 2 Wittgenstein passages
     const limitedTransPassages = transPassages.slice(0, 2); // Only use top 2 Transaction Theory passages
 
     // Create a more structured prompt
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-3.5-turbo',
       temperature: 0.7,
       max_tokens: 1000, // Increased max tokens for more detailed response
       messages: [
@@ -139,10 +140,21 @@ export default async function handler(
         return res.status(400).json({ error: 'Missing Transaction Theory passages' });
       }
 
+      // Get API key from header or environment
+      const apiKey = req.headers.authorization?.replace('Bearer ', '') || process.env.OPENAI_API_KEY;
+      
+      if (!apiKey) {
+        return res.status(401).json({
+          error: 'API key required',
+          message: 'Please provide your OpenAI API key to use this feature.'
+        });
+      }
+
       console.log(`Generating Transaction Theory interpretation`);
+      console.log('API key detected (starts with):', apiKey.substring(0, 10) + '...');
       
       // Generate interpretation directly
-      const result = await generateTransactionalInterpretation(query, wittPassages, transPassages);
+      const result = await generateTransactionalInterpretation(query, wittPassages, transPassages, apiKey);
       
       // Return the interpretation immediately
       return res.status(200).json({ 

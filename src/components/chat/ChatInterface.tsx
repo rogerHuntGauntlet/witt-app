@@ -786,7 +786,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ customApiKey }) =>
                 hasJobId: !!startData.jobId,
                 responseKeys: Object.keys(startData),
                 responseType: typeof startData,
-                responseValue: JSON.stringify(startData)
+                responseValue: JSON.stringify(startData).substring(0, 200) + '...' // Truncate for logging
               });
               
               // Check if the response has a direct interpretation (non-job mode)
@@ -797,16 +797,39 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ customApiKey }) =>
                 setCurrentInterpretation(prev => {
                   if (!prev) return prev;
                   
+                  // Special handling for Transaction Theory which has different response structure
+                  if (framework.id === 'transactional') {
+                    return {
+                      ...prev,
+                      frameworks: prev.frameworks.map(fw =>
+                        fw.id === framework.id
+                          ? {
+                              ...fw,
+                              interpretation: startData.interpretation,
+                              keyInsights: startData.structuredInterpretation?.keyInsights || [],
+                              relevantQuotes: startData.structuredInterpretation?.relevantQuotes || [],
+                              referencePassages: [
+                                ...(startData.wittReferencePassages || []), 
+                                ...(startData.transReferencePassages || [])
+                              ],
+                              isLoading: false,
+                              error: false
+                            }
+                          : fw
+                      )
+                    };
+                  }
+                  
                   return {
                     ...prev,
                     frameworks: prev.frameworks.map(fw =>
                       fw.id === framework.id
                         ? {
                             ...fw,
-                            interpretation: startData.interpretation.mainInterpretation,
-                            keyInsights: startData.interpretation.keyInsights,
-                            relevantQuotes: startData.interpretation.relevantQuotes,
-                            referencePassages: startData.referencePassages,
+                            interpretation: startData.interpretation,
+                            keyInsights: startData.structuredInterpretation?.keyInsights || [],
+                            relevantQuotes: startData.structuredInterpretation?.relevantQuotes || [],
+                            referencePassages: startData.referencePassages || [],
                             isLoading: false,
                             error: false
                           }
@@ -821,6 +844,53 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ customApiKey }) =>
                   [framework.id]: 'complete'
                 }));
 
+                return { framework, success: true };
+              }
+              
+              // Special handling for transaction theory which doesn't use jobId
+              if (framework.id === 'transactional') {
+                // Even without a specific interpretation field, we can still use the response
+                console.log(`Processing Transaction Theory response:`, Object.keys(startData));
+                
+                // Log more details about the transaction response
+                console.log('Transaction response structure:', {
+                  hasMainInterpretation: !!startData.interpretation,
+                  hasStructuredInterpretation: !!startData.structuredInterpretation,
+                  hasWittReferences: Array.isArray(startData.wittReferencePassages),
+                  hasTransReferences: Array.isArray(startData.transReferencePassages)
+                });
+                
+                // Update the framework with whatever data we have
+                setCurrentInterpretation(prev => {
+                  if (!prev) return prev;
+                  
+                  return {
+                    ...prev,
+                    frameworks: prev.frameworks.map(fw => 
+                      fw.id === framework.id 
+                        ? { 
+                            ...fw, 
+                            interpretation: startData.interpretation || 'Transaction Theory interpretation completed.',
+                            keyInsights: startData.structuredInterpretation?.keyInsights || [],
+                            relevantQuotes: startData.structuredInterpretation?.relevantQuotes || [],
+                            referencePassages: [
+                              ...(startData.wittReferencePassages || []), 
+                              ...(startData.transReferencePassages || [])
+                            ],
+                            isLoading: false,
+                            error: false
+                          } 
+                        : fw
+                    )
+                  };
+                });
+                
+                // Update framework status
+                setFrameworkStatuses(prev => ({ 
+                  ...prev, 
+                  [framework.id]: 'complete' 
+                }));
+                
                 return { framework, success: true };
               }
               
@@ -1245,7 +1315,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ customApiKey }) =>
                 {/* Main interpretation */}
                 <div className={styles.interpretationSection}>
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {framework.interpretation}
+                    {typeof framework.interpretation === 'string' ? framework.interpretation : 'Interpretation loaded but format is invalid.'}
                   </ReactMarkdown>
                 </div>
                 
@@ -1418,6 +1488,28 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ customApiKey }) =>
               }
             });
           }
+          
+          // Special handling for Transaction Theory response structure
+          return {
+            ...prev,
+            citations: updatedCitations,
+            frameworks: prev.frameworks.map(fw => 
+              fw.id === framework.id 
+                ? { 
+                    ...fw, 
+                    interpretation: data.interpretation,
+                    keyInsights: data.structuredInterpretation?.keyInsights || [],
+                    relevantQuotes: data.structuredInterpretation?.relevantQuotes || [],
+                    referencePassages: [
+                      ...(data.wittReferencePassages || []), 
+                      ...(data.transReferencePassages || [])
+                    ],
+                    isLoading: false,
+                    error: false
+                  } 
+                : fw
+            )
+          };
         } 
         // For other frameworks, handle regular reference passages
         else if (data.referencePassages && Array.isArray(data.referencePassages)) {
@@ -1426,8 +1518,27 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ customApiKey }) =>
               updatedCitations.push(passage);
             }
           });
+          
+          return {
+            ...prev,
+            citations: updatedCitations,
+            frameworks: prev.frameworks.map(fw => 
+              fw.id === framework.id 
+                ? { 
+                    ...fw, 
+                    interpretation: data.interpretation,
+                    keyInsights: data.structuredInterpretation?.keyInsights || [],
+                    relevantQuotes: data.structuredInterpretation?.relevantQuotes || [],
+                    referencePassages: data.referencePassages || [],
+                    isLoading: false,
+                    error: false
+                  } 
+                : fw
+            )
+          };
         }
         
+        // Default case if no reference passages are found
         return {
           ...prev,
           citations: updatedCitations,
@@ -1438,9 +1549,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ customApiKey }) =>
                   interpretation: data.interpretation,
                   keyInsights: data.structuredInterpretation?.keyInsights || [],
                   relevantQuotes: data.structuredInterpretation?.relevantQuotes || [],
-                  referencePassages: framework.id === 'transactional' 
-                    ? [...(data.wittReferencePassages || []), ...(data.transReferencePassages || [])]
-                    : data.referencePassages || [],
                   isLoading: false,
                   error: false
                 } 

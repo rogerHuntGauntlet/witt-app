@@ -5,17 +5,6 @@ import dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
-// Initialize OpenAI client with API key from request header or environment
-const getOpenAIClient = (req: NextApiRequest) => {
-  const apiKey = req.headers.authorization?.replace('Bearer ', '') || process.env.OPENAI_API_KEY;
-  
-  if (!apiKey) {
-    throw new Error('OpenAI API key is required. Please provide your own API key or try again later when the default key is available.');
-  }
-  
-  return new OpenAI({ apiKey });
-};
-
 // Interface for a better structured response
 interface InterpretationResponse {
   mainInterpretation: string;
@@ -33,9 +22,12 @@ async function generateFrameworkInterpretation(
   query: string,
   passages: any[],
   framework: string,
-  openaiClient: OpenAI
+  apiKey: string
 ): Promise<{interpretation: InterpretationResponse, referencePassages: any[]}> {
   try {
+    // Initialize OpenAI client with the provided API key
+    const openaiClient = new OpenAI({ apiKey });
+    
     // Map framework IDs to their proper names
     const frameworkNameMap: { [key: string]: string } = {
       'early': 'Early Wittgenstein',
@@ -60,9 +52,11 @@ async function generateFrameworkInterpretation(
     // Limit the number of passages to avoid timeouts
     const limitedPassages = passages.slice(0, 3); // Only use top 3 passages
 
+    console.log(`Generating interpretation for framework: ${frameworkName} using model: gpt-3.5-turbo`);
+
     // Create a more structured prompt
     const response = await openaiClient.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-3.5-turbo', // Use gpt-3.5-turbo which should be available to all API keys
       temperature: 0.7,
       max_tokens: 1000,
       messages: [
@@ -128,6 +122,11 @@ async function generateFrameworkInterpretation(
     };
   } catch (error: any) {
     console.error('Error generating framework interpretation:', error);
+    console.error('Error details:', JSON.stringify({
+      message: error.message,
+      status: error.status,
+      response: error.response,
+    }, null, 2));
     throw error;
   }
 }
@@ -166,13 +165,11 @@ export default async function handler(
         });
       }
 
-      // Initialize OpenAI client with API key
-      const openaiClient = new OpenAI({ apiKey });
-
-      console.log(`Generating interpretation for framework: ${framework}`);
+      console.log(`Framework interpretation request for: ${framework}`);
+      console.log('API key detected (starts with):', apiKey.substring(0, 10) + '...');
       
       // Generate interpretation directly
-      const result = await generateFrameworkInterpretation(query, passages, framework, openaiClient);
+      const result = await generateFrameworkInterpretation(query, passages, framework, apiKey);
       
       // Return the interpretation immediately
       return res.status(200).json({ 
@@ -186,7 +183,7 @@ export default async function handler(
       console.error('Error in framework interpretation endpoint:', error);
       
       // Handle OpenAI API specific errors
-      if (error.response?.status === 401 || error.message?.toLowerCase().includes('api key')) {
+      if (error.response?.status === 401 || (error.message && error.message.toLowerCase().includes('api key'))) {
         return res.status(401).json({
           error: 'Invalid API key',
           message: 'The provided API key was rejected by OpenAI.'
@@ -194,7 +191,7 @@ export default async function handler(
       }
       
       // Handle rate limits
-      if (error.response?.status === 429 || error.message?.toLowerCase().includes('rate limit')) {
+      if (error.response?.status === 429 || (error.message && error.message.toLowerCase().includes('rate limit'))) {
         return res.status(429).json({
           error: 'Rate limit exceeded',
           message: 'Too many requests. Please try again later.'
