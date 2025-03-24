@@ -571,7 +571,24 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ customApiKey }) =>
       
       if (!wittSearchResponse.ok) {
         const errorData = await wittSearchResponse.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to search Wittgenstein passages');
+        const errorMessage = errorData.message || 'Failed to search Wittgenstein passages';
+        
+        // Check for API key related errors
+        if (wittSearchResponse.status === 401 || errorMessage.toLowerCase().includes('api key')) {
+          setMessages(prev => [
+            ...prev.slice(0, -1), // Remove the loading message
+            {
+              id: uuidv4(),
+              role: 'assistant',
+              content: 'The default API key is currently unavailable. Please use your own OpenAI API key by enabling the "Use my own OpenAI API key" option above the chat. You can get an API key from https://platform.openai.com/api-keys',
+              timestamp: new Date()
+            }
+          ]);
+          setIsLoading(false);
+          return;
+        }
+        
+        throw new Error(errorMessage);
       }
       
       const wittSearchData = await wittSearchResponse.json();

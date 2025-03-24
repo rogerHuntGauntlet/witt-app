@@ -5,10 +5,16 @@ import dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || '',
-});
+// Initialize OpenAI client with API key from request header or environment
+const getOpenAIClient = (req: NextApiRequest) => {
+  const apiKey = req.headers.authorization?.replace('Bearer ', '') || process.env.OPENAI_API_KEY;
+  
+  if (!apiKey) {
+    throw new Error('OpenAI API key is required. Please provide your own API key or try again later when the default key is available.');
+  }
+  
+  return new OpenAI({ apiKey });
+};
 
 // Interface for a better structured response
 interface InterpretationResponse {
@@ -26,14 +32,15 @@ interface InterpretationResponse {
 async function generateFrameworkInterpretation(
   query: string,
   passages: any[],
-  framework: string
+  framework: string,
+  openaiClient: OpenAI
 ): Promise<{interpretation: InterpretationResponse, referencePassages: any[]}> {
   try {
     // Limit the number of passages to avoid timeouts
     const limitedPassages = passages.slice(0, 3); // Only use top 3 passages
 
     // Create a more structured prompt
-    const response = await openai.chat.completions.create({
+    const response = await openaiClient.chat.completions.create({
       model: 'gpt-4o',
       temperature: 0.7,
       max_tokens: 1000, // Increased max tokens for more detailed response
@@ -111,47 +118,33 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // Handle new interpretation requests
-  if (req.method === 'POST') {
-    try {
-      const { query, passages, framework } = req.body;
+  if (req.method !== 'POST') {
+    return res.status(405).json({ message: 'Method not allowed' });
+  }
 
-      if (!query) {
-        return res.status(400).json({ error: 'Missing query' });
-      }
+  try {
+    const openaiClient = getOpenAIClient(req);
+    
+    const { query, passages, framework } = req.body;
+    
+    if (!query || !passages || !framework) {
+      return res.status(400).json({ message: 'Missing required parameters' });
+    }
 
-      if (!passages || !Array.isArray(passages) || passages.length === 0) {
-        return res.status(400).json({ error: 'Missing passages' });
-      }
-
-      if (!framework) {
-        return res.status(400).json({ error: 'Missing framework' });
-      }
-
-      console.log(`Generating interpretation for ${framework} framework`);
-      
-      // Generate interpretation directly
-      const result = await generateFrameworkInterpretation(query, passages, framework);
-      
-      // Return the interpretation immediately
-      return res.status(200).json({ 
-        interpretation: result.interpretation.mainInterpretation,
-        structuredInterpretation: result.interpretation,
-        referencePassages: result.referencePassages,
-        framework
-      });
-      
-    } catch (error: any) {
-      console.error('Error in interpretation endpoint:', error);
-      
-      return res.status(500).json({
-        error: 'Failed to generate interpretation',
-        message: error.message || 'An unexpected error occurred'
+    const result = await generateFrameworkInterpretation(query, passages, framework, openaiClient);
+    res.status(200).json(result);
+  } catch (error: any) {
+    console.error('API Error:', error);
+    
+    // Handle specific OpenAI API errors
+    if (error.message?.toLowerCase().includes('api key')) {
+      return res.status(401).json({ 
+        message: 'Invalid or missing API key. Please provide a valid OpenAI API key.'
       });
     }
+    
+    res.status(500).json({ 
+      message: error.message || 'An error occurred while processing your request'
+    });
   }
-  
-  // Method not allowed
-  res.setHeader('Allow', 'POST');
-  res.status(405).json({ error: 'Method not allowed' });
 } 
