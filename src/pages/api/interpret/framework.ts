@@ -36,6 +36,25 @@ async function generateFrameworkInterpretation(
   openaiClient: OpenAI
 ): Promise<{interpretation: InterpretationResponse, referencePassages: any[]}> {
   try {
+    // Map framework IDs to their proper names
+    const frameworkNameMap: { [key: string]: string } = {
+      'picture-theory': 'Early Wittgenstein (Picture Theory)',
+      'language-games': 'Later Wittgenstein (Language Games)',
+      'therapeutic': 'Therapeutic Reading',
+      'resolute': 'Resolute Reading',
+      'pragmatic': 'Pragmatic Reading',
+      'contextualist': 'Contextualist Reading',
+      'naturalistic': 'Naturalistic Reading',
+      'post-analytic': 'Post-Analytic Reading',
+      'ethical': 'Ethical Reading',
+      'metaphysical': 'Metaphysical Reading',
+      'pyrrhonian': 'Pyrrhonian Reading',
+      'transcendental': 'Transcendental Reading'
+    };
+
+    // Get the proper framework name
+    const frameworkName = frameworkNameMap[framework.toLowerCase()] || framework;
+
     // Limit the number of passages to avoid timeouts
     const limitedPassages = passages.slice(0, 3); // Only use top 3 passages
 
@@ -47,7 +66,7 @@ async function generateFrameworkInterpretation(
       messages: [
         {
           role: 'system',
-          content: `You are a Wittgenstein expert. Provide a detailed interpretation from the ${framework} perspective. 
+          content: `You are a Wittgenstein expert. Provide a detailed interpretation from the ${frameworkName} perspective. 
           Structure your response in JSON format with the following keys:
           - mainInterpretation: A concise summary (2-3 paragraphs)
           - keyInsights: 2-3 key insights as bullet points (array of strings)
@@ -55,7 +74,7 @@ async function generateFrameworkInterpretation(
         },
         {
           role: 'user',
-          content: `Question: ${query}\n\nPassages: ${limitedPassages.map(p => `"${p.text.substring(0, 250)}..."`).join('\n\n')}\n\nProvide a structured interpretation from the ${framework} perspective. Focus on key insights and their implications.`
+          content: `Question: ${query}\n\nPassages: ${limitedPassages.map(p => `"${p.text.substring(0, 250)}..."`).join('\n\n')}\n\nProvide a structured interpretation from the ${frameworkName} perspective. Focus on key insights and their implications.`
         }
       ],
       response_format: { type: "json_object" }
@@ -123,37 +142,72 @@ export default async function handler(
   }
 
   try {
-    const openaiClient = getOpenAIClient(req);
+    // Check for API key first
+    const apiKey = req.headers.authorization?.replace('Bearer ', '') || process.env.OPENAI_API_KEY;
+    
+    if (!apiKey) {
+      return res.status(401).json({
+        message: 'API key required',
+        code: 'no_api_key',
+        details: 'Please provide your OpenAI API key to use this feature.'
+      });
+    }
+
+    // Initialize OpenAI client
+    const openaiClient = new OpenAI({ apiKey });
     
     const { query, passages, framework } = req.body;
     
     if (!query || !passages || !framework) {
-      return res.status(400).json({ message: 'Missing required parameters' });
+      return res.status(400).json({ 
+        message: 'Missing required parameters',
+        code: 'missing_params'
+      });
     }
 
-    const result = await generateFrameworkInterpretation(query, passages, framework, openaiClient);
-    res.status(200).json(result);
+    try {
+      const result = await generateFrameworkInterpretation(query, passages, framework, openaiClient);
+      res.status(200).json(result);
+    } catch (interpretError: any) {
+      // Handle OpenAI API specific errors
+      if (interpretError.response?.status === 401 || 
+          interpretError.message?.toLowerCase().includes('api key')) {
+        return res.status(401).json({
+          message: 'Invalid API key',
+          code: 'invalid_api_key',
+          details: 'The provided API key was rejected by OpenAI.'
+        });
+      }
+      
+      // Handle rate limits
+      if (interpretError.response?.status === 429 || 
+          interpretError.message?.toLowerCase().includes('rate limit')) {
+        return res.status(429).json({
+          message: 'Rate limit exceeded',
+          code: 'rate_limit',
+          details: 'Too many requests. Please try again later.'
+        });
+      }
+      
+      throw interpretError; // Re-throw for general error handling
+    }
   } catch (error: any) {
     console.error('API Error:', error);
     
-    // Enhanced error handling for API key issues
-    if (error.message?.toLowerCase().includes('api key') || 
-        error.message?.toLowerCase().includes('invalid_api_key') ||
-        error.message?.toLowerCase().includes('no api key')) {
-      return res.status(401).json({ 
-        message: 'The default API key is currently unavailable. Please use your own OpenAI API key by enabling the "Use my own OpenAI API key" option above the chat.'
-      });
-    }
-    
-    // Handle rate limit errors
-    if (error.message?.toLowerCase().includes('rate limit')) {
-      return res.status(429).json({
-        message: 'Rate limit exceeded. Please try again in a few moments.'
+    // Return appropriate error response
+    if (error.response?.status === 401 || 
+        error.message?.toLowerCase().includes('api key')) {
+      return res.status(401).json({
+        message: 'API key error',
+        code: 'api_key_error',
+        details: 'Please check your API key or provide a valid OpenAI API key.'
       });
     }
     
     res.status(500).json({ 
-      message: error.message || 'An error occurred while processing your request'
+      message: 'Internal server error',
+      code: 'server_error',
+      details: process.env.NODE_ENV === 'development' ? error.message : 'An unexpected error occurred.'
     });
   }
 } 

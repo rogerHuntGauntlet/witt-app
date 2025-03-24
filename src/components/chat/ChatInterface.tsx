@@ -548,6 +548,41 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ customApiKey }) =>
       // Add the temporary message to the chat
       setMessages(prev => [...prev, tempAssistantMessage]);
       
+      // Helper function to handle API errors
+      const handleApiError = (error: any) => {
+        const errorData = error.response?.data || {};
+        
+        // Handle API key errors
+        if (error.response?.status === 401 || errorData.code?.includes('api_key')) {
+          setMessages(prev => [
+            ...prev.slice(0, -1), // Remove the loading message
+            {
+              id: uuidv4(),
+              role: 'assistant',
+              content: '⚠️ API Key Required\n\nTo use this feature, you need to provide your own OpenAI API key:\n\n1. Click the checkbox above labeled "Use my own OpenAI API key"\n2. Get an API key from [OpenAI\'s platform](https://platform.openai.com/api-keys)\n3. Paste your API key in the input field\n4. Try your question again\n\nThis is required because the default API key is currently unavailable.',
+              timestamp: new Date()
+            }
+          ]);
+          return true;
+        }
+        
+        // Handle rate limit errors
+        if (error.response?.status === 429 || errorData.code === 'rate_limit') {
+          setMessages(prev => [
+            ...prev.slice(0, -1),
+            {
+              id: uuidv4(),
+              role: 'assistant',
+              content: '⏳ Rate Limit Exceeded\n\nThe server is currently experiencing high traffic. Please wait a moment and try again.',
+              timestamp: new Date()
+            }
+          ]);
+          return true;
+        }
+        
+        return false;
+      };
+      
       // Step 2: Search for Wittgenstein passages
       console.log("Step 2: Searching for Wittgenstein passages...");
       
@@ -560,322 +595,249 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ customApiKey }) =>
         headers['Authorization'] = `Bearer ${customApiKey}`;
       }
 
-      const wittSearchResponse = await fetch('/api/search/wittgenstein', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          query: userMessage.content,
-          collectionName: 'second-brain-docs',
-        }),
-      });
-      
-      if (!wittSearchResponse.ok) {
-        const errorData = await wittSearchResponse.json().catch(() => ({}));
-        const errorMessage = errorData.message || 'Failed to search Wittgenstein passages';
+      try {
+        const wittSearchResponse = await fetch('/api/search/wittgenstein', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            query: userMessage.content,
+            collectionName: 'second-brain-docs',
+          }),
+        });
         
-        // Check for API key related errors
-        if (wittSearchResponse.status === 401 || 
-            errorMessage.toLowerCase().includes('api key') ||
-            errorMessage.toLowerCase().includes('invalid_api_key')) {
-          setMessages(prev => [
-            ...prev.slice(0, -1), // Remove the loading message
-            {
-              id: uuidv4(),
-              role: 'assistant',
-              content: 'The default API key is currently unavailable. Please use your own OpenAI API key:\n\n1. Click the checkbox above labeled "Use my own OpenAI API key"\n2. Get an API key from [OpenAI\'s platform](https://platform.openai.com/api-keys)\n3. Paste your API key in the input field\n4. Try your question again',
-              timestamp: new Date()
-            }
-          ]);
-          setIsLoading(false);
-          setProcessingStep('idle');
-          return;
-        }
-
-        // Handle rate limit errors
-        if (wittSearchResponse.status === 429 || errorMessage.toLowerCase().includes('rate limit')) {
-          setMessages(prev => [
-            ...prev.slice(0, -1),
-            {
-              id: uuidv4(),
-              role: 'assistant',
-              content: 'The server is currently experiencing high traffic. Please wait a moment and try again.',
-              timestamp: new Date()
-            }
-          ]);
-          setIsLoading(false);
-          setProcessingStep('idle');
-          return;
+        if (!wittSearchResponse.ok) {
+          const errorData = await wittSearchResponse.json();
+          if (handleApiError({ response: { status: wittSearchResponse.status, data: errorData } })) {
+            setIsLoading(false);
+            setProcessingStep('idle');
+            return;
+          }
+          throw new Error(errorData.message || 'Failed to search Wittgenstein passages');
         }
         
-        throw new Error(errorMessage);
-      }
-      
-      const wittSearchData = await wittSearchResponse.json();
-      const wittPassages = wittSearchData.passages;
-      
-      if (!wittPassages || wittPassages.length === 0) {
-        throw new Error('No relevant Wittgenstein passages found. Try a different query.');
-      }
-
-      // Update citations with Wittgenstein passages
-      setCurrentInterpretation(prev => {
-        if (!prev) return {
-          question: userMessage.content,
-          frameworks: [],
-          citations: [...wittPassages],
-          timestamp: new Date()
-        };
-        return {
-          ...prev,
-          citations: [...wittPassages]
-        };
-      });
-      
-      // Step 3: Search for Transaction Theory passages
-      setProcessingStep('searching-transaction');
-      console.log("Step 3: Searching for Transaction Theory passages...");
-      
-      const transSearchResponse = await fetch('/api/search/transaction', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          query: userMessage.content,
-          collectionName: 'second-brain-docs',
-        }),
-      });
-      
-      let transPassages: any[] = [];
-      if (transSearchResponse.ok) {
-        const transSearchData = await transSearchResponse.json();
-        transPassages = transSearchData.passages || [];
+        const wittSearchData = await wittSearchResponse.json();
+        const wittPassages = wittSearchData.passages;
         
-        // Update citations with Transaction Theory passages
+        if (!wittPassages || wittPassages.length === 0) {
+          throw new Error('No relevant Wittgenstein passages found. Try a different query.');
+        }
+
+        // Update citations with Wittgenstein passages
         setCurrentInterpretation(prev => {
           if (!prev) return {
             question: userMessage.content,
             frameworks: [],
-            citations: [...wittPassages, ...transPassages],
+            citations: [...wittPassages],
             timestamp: new Date()
           };
           return {
             ...prev,
-            citations: [...(prev.citations || []), ...transPassages]
+            citations: [...wittPassages]
           };
         });
-      }
-      
-      // Place the progressMessage declaration here before it's used in the later sections
-      let progressMessage: Message;
-      
-      // Update the progress message
-      progressMessage = {
-        id: uuidv4(),
-        role: 'assistant',
-        content: 'I\'m analyzing your question through multiple philosophical frameworks. Interpretations will appear progressively as they are generated.',
-        timestamp: new Date()
-      };
-      
-      // Replace the temporary message with the progress message
-      setMessages(prev => prev.map(msg => 
-        msg.id === tempAssistantMessage.id ? progressMessage : msg
-      ));
-      
-      // Step 4: Prepare framework data - use all the frameworks
-      const frameworksData: SimpleFramework[] = [
-        { id: 'picture-theory', name: 'Picture Theory' },
-        { id: 'language-games', name: 'Language Games' },
-        { id: 'therapeutic', name: 'Therapeutic Reading' },
-        { id: 'resolute', name: 'Resolute Reading' },
-        { id: 'pragmatic', name: 'Pragmatic Reading' },
-        { id: 'contextualist', name: 'Contextualist Reading' },
-        { id: 'naturalistic', name: 'Naturalistic Reading' },
-        { id: 'post-analytic', name: 'Post-Analytic Reading' },
-        { id: 'ethical', name: 'Ethical Reading' },
-        { id: 'transactional', name: 'Transaction Theory' }
-      ];
-      
-      // Initialize all frameworks as loading
-      const initialStatuses: Record<string, 'loading' | 'complete' | 'error'> = {};
-      frameworksData.forEach(framework => {
-        initialStatuses[framework.id] = 'loading';
-      });
-      setFrameworkStatuses(initialStatuses);
-      
-      // Add empty framework placeholders to the interpretation state
-      setCurrentInterpretation(prev => {
-        if (!prev) return {
-          question: userMessage.content,
-          frameworks: frameworksData.map(framework => ({
-            id: framework.id,
-            name: framework.name,
-            description: framework.id,
-            interpretation: 'Loading interpretation...',
-            isLoading: true
-          })),
-          citations: [],
+        
+        // Step 3: Search for Transaction Theory passages
+        setProcessingStep('searching-transaction');
+        console.log("Step 3: Searching for Transaction Theory passages...");
+        
+        const transSearchResponse = await fetch('/api/search/transaction', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            query: userMessage.content,
+            collectionName: 'second-brain-docs',
+          }),
+        });
+        
+        let transPassages: any[] = [];
+        if (transSearchResponse.ok) {
+          const transSearchData = await transSearchResponse.json();
+          transPassages = transSearchData.passages || [];
+          
+          // Update citations with Transaction Theory passages
+          setCurrentInterpretation(prev => {
+            if (!prev) return {
+              question: userMessage.content,
+              frameworks: [],
+              citations: [...wittPassages, ...transPassages],
+              timestamp: new Date()
+            };
+            return {
+              ...prev,
+              citations: [...(prev.citations || []), ...transPassages]
+            };
+          });
+        }
+        
+        // Place the progressMessage declaration here before it's used in the later sections
+        let progressMessage: Message;
+        
+        // Update the progress message
+        progressMessage = {
+          id: uuidv4(),
+          role: 'assistant',
+          content: 'I\'m analyzing your question through multiple philosophical frameworks. Interpretations will appear progressively as they are generated.',
           timestamp: new Date()
         };
-        return {
-          ...prev,
-          frameworks: frameworksData.map(framework => ({
-            id: framework.id,
-            name: framework.name,
-            description: framework.id,
-            interpretation: 'Loading interpretation...',
-            isLoading: true
-          }))
-        };
-      });
-      
-      // Step 5: Set the overall processing step to generating interpretations
-      setProcessingStep('generating-interpretations');
-      
-      // Step 6: Process interpretations with multiple parallel API calls
-      setProcessingStep('generating-interpretations');
-      console.log("Step 3: Generating interpretations in parallel...");
-      
-      try {
-        // Create requests for each framework individually
-        const frameworkPromises = frameworksData.map(async (framework: SimpleFramework) => {
-          try {
-            console.log(`Starting interpretation for ${framework.name}...`);
-            
-            // Update the framework status to loading
-            setFrameworkStatuses(prev => ({ 
-              ...prev, 
-              [framework.id]: 'loading' 
-            }));
-            
-            // Start the framework generation (returns a job ID immediately)
-            const startResponse = await fetch(`/api/interpret/${framework.id === 'transactional' ? 'transaction' : 'framework'}`, {
-              method: 'POST',
-              headers,
-              body: JSON.stringify(
-                framework.id === 'transactional'
-                  ? {
-                      query: userMessage.content,
-                      wittPassages,
-                      transPassages
-                    }
-                  : {
-                      query: userMessage.content,
-                      passages: wittPassages,
-                      framework: framework.name
-                    }
-              ),
-            });
-            
-            if (!startResponse.ok) {
-              throw new Error(`Failed to start ${framework.name} interpretation job`);
-            }
-            
-            const startData = await startResponse.json();
-            
-            // Enhanced debug logging to better understand the response
-            console.log(`${framework.name} API response:`, {
-              hasInterpretation: !!startData.interpretation,
-              hasJobId: !!startData.jobId,
-              responseKeys: Object.keys(startData),
-              responseType: typeof startData,
-              responseValue: JSON.stringify(startData)
-            });
-            
-            // Check if the response has a direct interpretation (non-job mode)
-            if (startData.interpretation) {
-              console.log(`Received direct interpretation for ${framework.name}`);
+        
+        // Replace the temporary message with the progress message
+        setMessages(prev => prev.map(msg => 
+          msg.id === tempAssistantMessage.id ? progressMessage : msg
+        ));
+        
+        // Step 4: Prepare framework data - use all the frameworks
+        const frameworksData: SimpleFramework[] = [
+          { id: 'picture-theory', name: 'Picture Theory' },
+          { id: 'language-games', name: 'Language Games' },
+          { id: 'therapeutic', name: 'Therapeutic Reading' },
+          { id: 'resolute', name: 'Resolute Reading' },
+          { id: 'pragmatic', name: 'Pragmatic Reading' },
+          { id: 'contextualist', name: 'Contextualist Reading' },
+          { id: 'naturalistic', name: 'Naturalistic Reading' },
+          { id: 'post-analytic', name: 'Post-Analytic Reading' },
+          { id: 'ethical', name: 'Ethical Reading' },
+          { id: 'transactional', name: 'Transaction Theory' }
+        ];
+        
+        // Initialize all frameworks as loading
+        const initialStatuses: Record<string, 'loading' | 'complete' | 'error'> = {};
+        frameworksData.forEach(framework => {
+          initialStatuses[framework.id] = 'loading';
+        });
+        setFrameworkStatuses(initialStatuses);
+        
+        // Add empty framework placeholders to the interpretation state
+        setCurrentInterpretation(prev => {
+          if (!prev) return {
+            question: userMessage.content,
+            frameworks: frameworksData.map(framework => ({
+              id: framework.id,
+              name: framework.name,
+              description: framework.id,
+              interpretation: 'Loading interpretation...',
+              isLoading: true
+            })),
+            citations: [],
+            timestamp: new Date()
+          };
+          return {
+            ...prev,
+            frameworks: frameworksData.map(framework => ({
+              id: framework.id,
+              name: framework.name,
+              description: framework.id,
+              interpretation: 'Loading interpretation...',
+              isLoading: true
+            }))
+          };
+        });
+        
+        // Step 5: Set the overall processing step to generating interpretations
+        setProcessingStep('generating-interpretations');
+        
+        // Step 6: Process interpretations with multiple parallel API calls
+        setProcessingStep('generating-interpretations');
+        console.log("Step 3: Generating interpretations in parallel...");
+        
+        try {
+          // Create requests for each framework individually
+          const frameworkPromises = frameworksData.map(async (framework: SimpleFramework) => {
+            try {
+              console.log(`Starting interpretation for ${framework.name}...`);
               
-              // Update the framework with the interpretation and structured data
-              setCurrentInterpretation(prev => {
-                if (!prev) return prev;
-                
-                // Process reference passages if they exist
-                let updatedCitations = [...(prev.citations || [])];
-                
-                // For Transaction Theory, handle both Wittgenstein and Transaction passages
-                if (framework.id === 'transactional') {
-                  if (startData.wittReferencePassages && Array.isArray(startData.wittReferencePassages)) {
-                    // Add any new Wittgenstein passages
-                    startData.wittReferencePassages.forEach((passage: Citation) => {
-                      if (!updatedCitations.some(c => c.id === passage.id)) {
-                        updatedCitations.push(passage);
-                      }
-                    });
-                  }
-                  
-                  if (startData.transReferencePassages && Array.isArray(startData.transReferencePassages)) {
-                    // Add any new Transaction passages
-                    startData.transReferencePassages.forEach((passage: Citation) => {
-                      if (!updatedCitations.some(c => c.id === passage.id)) {
-                        updatedCitations.push(passage);
-                      }
-                    });
-                  }
-                } 
-                // For other frameworks, handle regular reference passages
-                else if (startData.referencePassages && Array.isArray(startData.referencePassages)) {
-                  startData.referencePassages.forEach((passage: Citation) => {
-                    if (!updatedCitations.some(c => c.id === passage.id)) {
-                      updatedCitations.push(passage);
-                    }
-                  });
-                }
-                
-                return {
-                  ...prev,
-                  citations: updatedCitations,
-                  frameworks: prev.frameworks.map(fw => 
-                    fw.id === framework.id 
-                      ? { 
-                          ...fw, 
-                          interpretation: startData.interpretation,
-                          keyInsights: startData.structuredInterpretation?.keyInsights || [],
-                          relevantQuotes: startData.structuredInterpretation?.relevantQuotes || [],
-                          referencePassages: framework.id === 'transactional' 
-                            ? [...(startData.wittReferencePassages || []), ...(startData.transReferencePassages || [])]
-                            : startData.referencePassages || [],
-                          isLoading: false,
-                          error: false
-                        } 
-                      : fw
-                  )
-                };
-              });
-              
-              // Update framework status
+              // Update the framework status to loading
               setFrameworkStatuses(prev => ({ 
                 ...prev, 
-                [framework.id]: 'complete' 
+                [framework.id]: 'loading' 
               }));
               
-              return { framework, success: true };
-            }
-            
-            // If no direct interpretation, look for job ID for polling
-            const jobId = startData.jobId;
-            
-            if (!jobId) {
-              console.error(`No job ID returned for ${framework.name} - server response:`, JSON.stringify(startData));
+              // Start the framework generation (returns a job ID immediately)
+              const startResponse = await fetch(`/api/interpret/${framework.id === 'transactional' ? 'transaction' : 'framework'}`, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify(
+                  framework.id === 'transactional'
+                    ? {
+                        query: userMessage.content,
+                        wittPassages,
+                        transPassages
+                      }
+                    : {
+                        query: userMessage.content,
+                        passages: wittPassages,
+                        framework: framework.id
+                      }
+                ),
+              });
               
-              // Try to extract any useful information from the response
-              let errorMessage = `Unable to generate interpretation for ${framework.name}. `;
+              if (!startResponse.ok) {
+                throw new Error(`Failed to start ${framework.name} interpretation job`);
+              }
               
-              // Check if there's an error field in the response
-              if (startData.error) {
-                errorMessage += `Error: ${startData.error}`;
-              } 
-              // If we have content in another field, try to use that
-              else if (startData.result) {
-                // If we have a result field but no interpretation, try to use that
+              const startData = await startResponse.json();
+              
+              // Enhanced debug logging to better understand the response
+              console.log(`${framework.name} API response:`, {
+                hasInterpretation: !!startData.interpretation,
+                hasJobId: !!startData.jobId,
+                responseKeys: Object.keys(startData),
+                responseType: typeof startData,
+                responseValue: JSON.stringify(startData)
+              });
+              
+              // Check if the response has a direct interpretation (non-job mode)
+              if (startData.interpretation) {
+                console.log(`Received direct interpretation for ${framework.name}`);
+                
+                // Update the framework with the interpretation and structured data
                 setCurrentInterpretation(prev => {
                   if (!prev) return prev;
                   
+                  // Process reference passages if they exist
+                  let updatedCitations = [...(prev.citations || [])];
+                  
+                  // For Transaction Theory, handle both Wittgenstein and Transaction passages
+                  if (framework.id === 'transactional') {
+                    if (startData.wittReferencePassages && Array.isArray(startData.wittReferencePassages)) {
+                      // Add any new Wittgenstein passages
+                      startData.wittReferencePassages.forEach((passage: Citation) => {
+                        if (!updatedCitations.some(c => c.id === passage.id)) {
+                          updatedCitations.push(passage);
+                        }
+                      });
+                    }
+                    
+                    if (startData.transReferencePassages && Array.isArray(startData.transReferencePassages)) {
+                      // Add any new Transaction passages
+                      startData.transReferencePassages.forEach((passage: Citation) => {
+                        if (!updatedCitations.some(c => c.id === passage.id)) {
+                          updatedCitations.push(passage);
+                        }
+                      });
+                    }
+                  } 
+                  // For other frameworks, handle regular reference passages
+                  else if (startData.referencePassages && Array.isArray(startData.referencePassages)) {
+                    startData.referencePassages.forEach((passage: Citation) => {
+                      if (!updatedCitations.some(c => c.id === passage.id)) {
+                        updatedCitations.push(passage);
+                      }
+                    });
+                  }
+                  
                   return {
                     ...prev,
+                    citations: updatedCitations,
                     frameworks: prev.frameworks.map(fw => 
                       fw.id === framework.id 
                         ? { 
                             ...fw, 
-                            interpretation: typeof startData.result === 'string' ? startData.result : JSON.stringify(startData.result),
+                            interpretation: startData.interpretation,
+                            keyInsights: startData.structuredInterpretation?.keyInsights || [],
+                            relevantQuotes: startData.structuredInterpretation?.relevantQuotes || [],
+                            referencePassages: framework.id === 'transactional' 
+                              ? [...(startData.wittReferencePassages || []), ...(startData.transReferencePassages || [])]
+                              : startData.referencePassages || [],
                             isLoading: false,
                             error: false
                           } 
@@ -892,11 +854,84 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ customApiKey }) =>
                 
                 return { framework, success: true };
               }
-              else {
-                errorMessage += 'The server provided a response but in an unexpected format. Try again or contact support.';
-              }
               
-              // Update the framework with a useful error message
+              // If no direct interpretation, look for job ID for polling
+              const jobId = startData.jobId;
+              
+              if (!jobId) {
+                console.error(`No job ID returned for ${framework.name} - server response:`, JSON.stringify(startData));
+                
+                // Try to extract any useful information from the response
+                let errorMessage = `Unable to generate interpretation for ${framework.name}. `;
+                
+                // Check if there's an error field in the response
+                if (startData.error) {
+                  errorMessage += `Error: ${startData.error}`;
+                } 
+                // If we have content in another field, try to use that
+                else if (startData.result) {
+                  // If we have a result field but no interpretation, try to use that
+                  setCurrentInterpretation(prev => {
+                    if (!prev) return prev;
+                    
+                    return {
+                      ...prev,
+                      frameworks: prev.frameworks.map(fw => 
+                        fw.id === framework.id 
+                          ? { 
+                              ...fw, 
+                              interpretation: typeof startData.result === 'string' ? startData.result : JSON.stringify(startData.result),
+                              isLoading: false,
+                              error: false
+                            } 
+                          : fw
+                      )
+                    };
+                  });
+                  
+                  // Update framework status
+                  setFrameworkStatuses(prev => ({ 
+                    ...prev, 
+                    [framework.id]: 'complete' 
+                  }));
+                  
+                  return { framework, success: true };
+                }
+                else {
+                  errorMessage += 'The server provided a response but in an unexpected format. Try again or contact support.';
+                }
+                
+                // Update the framework with a useful error message
+                setCurrentInterpretation(prev => {
+                  if (!prev) return prev;
+                  
+                  return {
+                    ...prev,
+                    frameworks: prev.frameworks.map(fw => 
+                      fw.id === framework.id 
+                        ? { 
+                            ...fw, 
+                            interpretation: errorMessage,
+                            isLoading: false,
+                            error: true
+                          } 
+                        : fw
+                    )
+                  };
+                });
+                
+                // Update framework status
+                setFrameworkStatuses(prev => ({ 
+                  ...prev, 
+                  [framework.id]: 'error' 
+                }));
+                
+                throw new Error('No job ID returned from server');
+              }
+            } catch (error) {
+              console.error(`Error generating interpretation for ${framework.name}:`, error);
+              
+              // Update the framework with error state
               setCurrentInterpretation(prev => {
                 if (!prev) return prev;
                 
@@ -906,7 +941,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ customApiKey }) =>
                     fw.id === framework.id 
                       ? { 
                           ...fw, 
-                          interpretation: errorMessage,
+                          interpretation: `Failed to generate interpretation for ${framework.name}. The server may be busy or the request timed out. You can try again using the retry button.`,
                           isLoading: false,
                           error: true
                         } 
@@ -921,65 +956,66 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ customApiKey }) =>
                 [framework.id]: 'error' 
               }));
               
-              throw new Error('No job ID returned from server');
+              return { framework, success: false, error: error as Error };
             }
-          } catch (error) {
-            console.error(`Error generating interpretation for ${framework.name}:`, error);
-            
-            // Update the framework with error state
-            setCurrentInterpretation(prev => {
-              if (!prev) return prev;
-              
-              return {
-                ...prev,
-                frameworks: prev.frameworks.map(fw => 
-                  fw.id === framework.id 
-                    ? { 
-                        ...fw, 
-                        interpretation: `Failed to generate interpretation for ${framework.name}. The server may be busy or the request timed out. You can try again using the retry button.`,
-                        isLoading: false,
-                        error: true
-                      } 
-                    : fw
-                )
-              };
-            });
-            
-            // Update framework status
-            setFrameworkStatuses(prev => ({ 
-              ...prev, 
-              [framework.id]: 'error' 
-            }));
-            
-            return { framework, success: false, error: error as Error };
-          }
-        });
-        
-        // Wait for all frameworks to complete (regardless of success/failure)
-        const results = await Promise.allSettled(frameworkPromises);
-        
-        console.log(`Completed ${results.filter(r => r.status === 'fulfilled' && (r.value as any)?.success).length} of ${frameworksData.length} interpretations`);
-        
-        // Set the final processing step
-        setProcessingStep('finalizing');
-        
-        // Get the last assistant message to update
-        const lastMessages = [...messages];
-        const lastAssistantMessageIndex = lastMessages.findIndex(m => m.role === 'assistant');
-        
-        // When all interpretations are complete, update the message
-        if (lastAssistantMessageIndex !== -1) {
-          // Create updated message
-          const updatedMessage: Message = {
-            id: lastMessages[lastAssistantMessageIndex].id,
-            role: 'assistant',
-            content: 'Here are interpretations of your question about Wittgenstein from various philosophical traditions. I\'ve analyzed the passages through multiple interpretative lenses to provide you with comprehensive insights.',
-            timestamp: new Date()
-          };
+          });
           
-          // Update the message
-          lastMessages[lastAssistantMessageIndex] = updatedMessage;
-          setMessages(lastMessages);
+          // Wait for all frameworks to complete (regardless of success/failure)
+          const results = await Promise.allSettled(frameworkPromises);
+          
+          console.log(`Completed ${results.filter(r => r.status === 'fulfilled' && (r.value as any)?.success).length} of ${frameworksData.length} interpretations`);
+          
+          // Set the final processing step
+          setProcessingStep('finalizing');
+          
+          // Get the last assistant message to update
+          const lastMessages = [...messages];
+          const lastAssistantMessageIndex = lastMessages.findIndex(m => m.role === 'assistant');
+          
+          // When all interpretations are complete, update the message
+          if (lastAssistantMessageIndex !== -1) {
+            // Create updated message
+            const updatedMessage: Message = {
+              id: lastMessages[lastAssistantMessageIndex].id,
+              role: 'assistant',
+              content: 'Here are interpretations of your question about Wittgenstein from various philosophical traditions. I\'ve analyzed the passages through multiple interpretative lenses to provide you with comprehensive insights.',
+              timestamp: new Date()
+            };
+            
+            // Update the message
+            lastMessages[lastAssistantMessageIndex] = updatedMessage;
+            setMessages(lastMessages);
+          }
+        } catch (error: any) {
+          console.error('Error:', error);
+          
+          // Even if something unexpected happens, we should still show any interpretations that did load
+          const completedFrameworks = Object.entries(frameworkStatuses)
+            .filter(([_, status]) => status === 'complete')
+            .map(([id]) => id);
+          
+          // Get the last assistant message to update
+          const lastMessages = [...messages];
+          const lastAssistantMessageIndex = lastMessages.findIndex(m => m.role === 'assistant');
+          
+          if (lastAssistantMessageIndex !== -1) {
+            // Create error message or partial success message
+            const updatedMessage: Message = {
+              id: lastMessages[lastAssistantMessageIndex].id,
+              role: 'assistant',
+              content: completedFrameworks.length > 0
+                ? `I was able to generate some interpretations of your question about Wittgenstein, though not all frameworks completed successfully. Here are the interpretations that were successfully generated.`
+                : `Sorry, I encountered an error while generating interpretations. ${error.message || 'Please try again with a simpler question or try again later.'}`,
+              timestamp: new Date()
+            };
+            
+            // Update the message
+            lastMessages[lastAssistantMessageIndex] = updatedMessage;
+            setMessages(lastMessages);
+          }
+        } finally {
+          setIsLoading(false);
+          setProcessingStep('idle');
         }
       } catch (error: any) {
         console.error('Error:', error);
@@ -1008,9 +1044,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ customApiKey }) =>
           lastMessages[lastAssistantMessageIndex] = updatedMessage;
           setMessages(lastMessages);
         }
-      } finally {
-        setIsLoading(false);
-        setProcessingStep('idle');
       }
     } catch (error: any) {
       console.error('Error:', error);
@@ -1355,13 +1388,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ customApiKey }) =>
         };
       });
       
-      console.log(`Requesting interpretation for ${framework.name}...`);
+      console.log(`Requesting interpretation for ${framework.name} with ID ${framework.id}...`);
       
       // Make a direct API call for the interpretation
       const response = await fetch(`/api/interpret/${framework.id === 'transactional' ? 'transaction' : 'framework'}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(customApiKey && { 'Authorization': `Bearer ${customApiKey}` })
         },
         body: JSON.stringify(
           framework.id === 'transactional'
@@ -1373,7 +1407,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ customApiKey }) =>
             : {
                 query: currentInterpretation?.question || '',
                 passages: currentInterpretation?.citations.filter(c => !c.id.startsWith('trans-')) || [],
-                framework: framework.name
+                framework: framework.id
               }
         ),
       });
