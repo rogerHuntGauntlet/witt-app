@@ -41,9 +41,9 @@ async function generateFrameworkInterpretation(
 
     // Create a more structured prompt
     const response = await openaiClient.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-4',
       temperature: 0.7,
-      max_tokens: 1000, // Increased max tokens for more detailed response
+      max_tokens: 1000,
       messages: [
         {
           role: 'system',
@@ -136,10 +136,19 @@ export default async function handler(
   } catch (error: any) {
     console.error('API Error:', error);
     
-    // Handle specific OpenAI API errors
-    if (error.message?.toLowerCase().includes('api key')) {
+    // Enhanced error handling for API key issues
+    if (error.message?.toLowerCase().includes('api key') || 
+        error.message?.toLowerCase().includes('invalid_api_key') ||
+        error.message?.toLowerCase().includes('no api key')) {
       return res.status(401).json({ 
-        message: 'Invalid or missing API key. Please provide a valid OpenAI API key.'
+        message: 'The default API key is currently unavailable. Please use your own OpenAI API key by enabling the "Use my own OpenAI API key" option above the chat.'
+      });
+    }
+    
+    // Handle rate limit errors
+    if (error.message?.toLowerCase().includes('rate limit')) {
+      return res.status(429).json({
+        message: 'Rate limit exceeded. Please try again in a few moments.'
       });
     }
     

@@ -574,17 +574,36 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ customApiKey }) =>
         const errorMessage = errorData.message || 'Failed to search Wittgenstein passages';
         
         // Check for API key related errors
-        if (wittSearchResponse.status === 401 || errorMessage.toLowerCase().includes('api key')) {
+        if (wittSearchResponse.status === 401 || 
+            errorMessage.toLowerCase().includes('api key') ||
+            errorMessage.toLowerCase().includes('invalid_api_key')) {
           setMessages(prev => [
             ...prev.slice(0, -1), // Remove the loading message
             {
               id: uuidv4(),
               role: 'assistant',
-              content: 'The default API key is currently unavailable. Please use your own OpenAI API key by enabling the "Use my own OpenAI API key" option above the chat. You can get an API key from https://platform.openai.com/api-keys',
+              content: 'The default API key is currently unavailable. Please use your own OpenAI API key:\n\n1. Click the checkbox above labeled "Use my own OpenAI API key"\n2. Get an API key from [OpenAI\'s platform](https://platform.openai.com/api-keys)\n3. Paste your API key in the input field\n4. Try your question again',
               timestamp: new Date()
             }
           ]);
           setIsLoading(false);
+          setProcessingStep('idle');
+          return;
+        }
+
+        // Handle rate limit errors
+        if (wittSearchResponse.status === 429 || errorMessage.toLowerCase().includes('rate limit')) {
+          setMessages(prev => [
+            ...prev.slice(0, -1),
+            {
+              id: uuidv4(),
+              role: 'assistant',
+              content: 'The server is currently experiencing high traffic. Please wait a moment and try again.',
+              timestamp: new Date()
+            }
+          ]);
+          setIsLoading(false);
+          setProcessingStep('idle');
           return;
         }
         
