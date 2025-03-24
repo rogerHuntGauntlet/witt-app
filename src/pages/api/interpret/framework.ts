@@ -50,7 +50,8 @@ async function generateFrameworkInterpretation(
       'ethical': 'Ethical Reading',
       'metaphysical': 'Metaphysical Reading',
       'pyrrhonian': 'Pyrrhonian Reading',
-      'transcendental': 'Transcendental Reading'
+      'transcendental': 'Transcendental Reading',
+      'transactional': 'Transaction Theory'
     };
 
     // Get the proper framework name

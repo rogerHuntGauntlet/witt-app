@@ -687,8 +687,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ customApiKey }) =>
         
         // Step 4: Prepare framework data - use all the frameworks
         const frameworksData: SimpleFramework[] = [
-          { id: 'picture-theory', name: 'Picture Theory' },
-          { id: 'language-games', name: 'Language Games' },
+          { id: 'early', name: 'Early Wittgenstein' },
+          { id: 'later', name: 'Later Wittgenstein' },
+          { id: 'ordinary', name: 'Ordinary Language' },
           { id: 'therapeutic', name: 'Therapeutic Reading' },
           { id: 'resolute', name: 'Resolute Reading' },
           { id: 'pragmatic', name: 'Pragmatic Reading' },
@@ -696,6 +697,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ customApiKey }) =>
           { id: 'naturalistic', name: 'Naturalistic Reading' },
           { id: 'post-analytic', name: 'Post-Analytic Reading' },
           { id: 'ethical', name: 'Ethical Reading' },
+          { id: 'metaphysical', name: 'Metaphysical Reading' },
+          { id: 'pyrrhonian', name: 'Pyrrhonian Reading' },
+          { id: 'transcendental', name: 'Transcendental Reading' },
           { id: 'transactional', name: 'Transaction Theory' }
         ];
         
