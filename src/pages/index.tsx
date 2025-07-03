@@ -22,6 +22,15 @@ export default function Home() {
       </Head>
 
       <Layout>
+        <header className={styles.header}>
+          <p>
+            Looking for Ludwitt Academy, visit{' '}
+            <a href="https://academy.ludwitt.com" target="_blank" rel="noopener noreferrer">
+              academy.ludwitt.com
+            </a>
+          </p>
+          <p>This page was our original application, which sometimes still works, so give a whirl!!</p>
+        </header>
         <section className={styles.heroSection}>
           <h1 className={styles.title}>Wittgenstein Interpretation Explorer</h1>
           <p className={styles.description}>
@@ -47,4 +56,4 @@ export default function Home() {
       </Layout>
     </>
   );
-} 
+}
